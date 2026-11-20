@@ -1,0 +1,24 @@
+[
+ {
+  "dir": "bench",
+  "variant": "base",
+  "sentences": 20,
+  "cer": 0.4877,
+  "categories": {
+   "日常": 0.3587,
+   "DSH": 0.6508
+  },
+  "seconds": 139.6
+ },
+ {
+  "dir": "bench",
+  "variant": "tilt",
+  "sentences": 20,
+  "cer": 0.4842,
+  "categories": {
+   "日常": 0.3572,
+   "DSH": 0.6454
+  },
+  "seconds": 127.8
+ }
+]
