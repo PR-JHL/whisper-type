@@ -27,7 +27,7 @@ python -m whispertype.server（faster-whisper，模型常驻）
 | 项 | 值 |
 |---|---|
 | 包名 | `@local/dsh-whisper-stt` |
-| 源码 | `E:\DSH_FairyLand\dsh-whisper-stt` |
+| 源码 | `../dsh-whisper-stt`（DSH 客户端插件，单独维护） |
 | provider id | `whisper-local` |
 | 默认语言 | `zh` |
 | 本地服务 | `http://127.0.0.1:17321` |
