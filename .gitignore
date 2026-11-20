@@ -1,0 +1,28 @@
+# 本地录音与评测产物（个人语音，不进仓库）
+bench/
+bench-normal/
+bench-close/
+bench-voiced/
+bench-synth/
+bench-synth-normal/
+bench-synth-soft/
+*.wav
+# 例外：单元测试用的 TTS 合成样本（不是真人录音）
+!tests/data/tts_zh.wav
+
+# 由真实录音派生的图（语谱图同样包含个人语音信息，不进仓库）
+docs/bench_spectrograms.png
+docs/spectrogram_气声对比.png
+
+# 缓存 / 运行产物
+.pytest_cache/
+__pycache__/
+*.pyc
+*.log
+.venv/
+venv/
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store

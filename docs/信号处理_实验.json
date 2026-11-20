@@ -1,0 +1,57 @@
+[
+ {
+  "dir": "bench",
+  "variant": "base",
+  "sentences": 20,
+  "cer": 0.5754,
+  "categories": {
+   "日常": 0.4687,
+   "DSH": 0.7002
+  },
+  "seconds": 52.1
+ },
+ {
+  "dir": "bench",
+  "variant": "tilt",
+  "sentences": 20,
+  "cer": 0.5579,
+  "categories": {
+   "日常": 0.4462,
+   "DSH": 0.6954
+  },
+  "seconds": 48.4
+ },
+ {
+  "dir": "bench",
+  "variant": "tilt9",
+  "sentences": 20,
+  "cer": 0.5754,
+  "categories": {
+   "日常": 0.4798,
+   "DSH": 0.6835
+  },
+  "seconds": 54.4
+ },
+ {
+  "dir": "bench",
+  "variant": "tilt12",
+  "sentences": 20,
+  "cer": 0.5684,
+  "categories": {
+   "日常": 0.4697,
+   "DSH": 0.6835
+  },
+  "seconds": 52.1
+ },
+ {
+  "dir": "bench",
+  "variant": "tilt_compress",
+  "sentences": 20,
+  "cer": 0.5895,
+  "categories": {
+   "日常": 0.4934,
+   "DSH": 0.701
+  },
+  "seconds": 43.6
+ }
+]

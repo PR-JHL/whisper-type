@@ -1,0 +1,10 @@
+# 注意：ctranslate2 4.9.0 在部分 Windows/Anaconda 环境加载模型会直接崩溃，
+# 这里锁 4.5.0（实测可用）。升级前先跑 `python -m whispertype doctor --asr`。
+faster-whisper==1.2.1
+ctranslate2==4.5.0
+sounddevice>=0.4.6
+pynput>=1.7.6
+pyperclip>=1.8.2
+pycaw>=20240210
+numpy>=1.24
+scipy>=1.10
