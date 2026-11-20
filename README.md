@@ -1,10 +1,11 @@
 # 气声输入 · whispertype
 
 按住一个热键，用**气声（压低声）**说一句话，松开后文字自动出现在当前窗口。
-本地识别（faster-whisper），不联网、不上传音频。
+本地识别（默认 SenseVoiceSmall，可选 faster-whisper），不联网、不上传音频。
 
-> 现状：软件链路已经跑通——内置中文测试音频的识别 CER = 0%，CPU 上 6.3s 音频约 1.7s 出字。
-> **你插的 BY-V20 领夹麦目前输出全零**（WASAPI 端点是数字静音），先按下面第 0 步检查硬件。
+> 现状：50 句真实气声基线 **CER 50.1%**（SenseVoice）/ 70.8%（whisper small），
+> 识别约 **0.05s/句**。气声 / 低声 / 正常音量三种模式的真实对比还没测，
+> 测试方案见 [docs/测试方案.md](docs/测试方案.md)。
 
 运行 `python -m whispertype run` 会弹出一个小窗：红点=录音、蓝=识别、绿=已输入。
 
@@ -94,41 +95,47 @@ DSH 自带语音输入链路，我们只补了一个本地 provider `whisper-loc
 
 细节、改配置和排错见 [docs/DSH接入.md](docs/DSH接入.md)。
 
-**P0 基线已经跑出来了**：50 句真实气声，CER **70.8%**（见 `docs/bench_report.md`）——
-气声对 whisper small 的损失很大。合成气声与真实气声的对照、以及下一步建议见
-[docs/合成气声_评测.md](docs/合成气声_评测.md)。
+**P0 基线已经跑出来了**：50 句真实气声，SenseVoice **50.1%**、whisper small **70.8%**
+（见 `docs/bench_report_sensevoice.md` 与 `docs/bench_report.md`）。合成气声与真实气声的对照、
+以及下一步建议见 [docs/合成气声_评测.md](docs/合成气声_评测.md)，引擎怎么选见
+[docs/引擎对比.md](docs/引擎对比.md)。
+
+**真机测试怎么录**（气声 / 低声 / 正常三种模式）：见 [docs/测试方案.md](docs/测试方案.md)，
+手机端录音页 `docs/record_phone.html`，录完用 `python tools/import_recordings.py --src <目录>` 整理。
 
 不用等录音也能跑回归：用百炼的 TTS 造「气声」，当天就能测。
 
 ```bash
-python tools/synth_whisper.py --out bench-synth   # 50 句，约 2 分钟（需要百炼 key）
-python tools/benchmark.py --dir bench-synth       # 同一套评测脚本
+python tools/synth_whisper.py --out bench-synth                 # 50 句合成气声（需要百炼 key）
+python tools/synth_calibrated.py --real bench --out bench-synth-cal  # 再用真实录音校准音色/底噪
+python tools/benchmark.py --dir bench-synth                     # 同一套评测脚本
+python tools/compare_modes.py                                   # 所有结果汇总成一张表
 ```
 
-合成气声 CER 18.2% / 真实气声 69.6%，四类难度排序完全一致 → 合成集能当**相对比较**的测试床，
-但不能拿它的绝对 CER 当验收线。
+合成气声 CER 11.5% / 真实气声 50.1%（SenseVoice），四类难度排序完全一致 → 合成集能当
+**相对比较**的测试床，但不能拿它的绝对 CER 当验收线。
 
-## 4. 模型与速度
+## 4. 引擎与速度
 
-| 模型 | 大小 | CPU 速度（RTF，越小越快） | 中文效果 | 气声实测 |
+默认引擎是 **SenseVoiceSmall**（sherpa-onnx，ONNX int8）：真实气声 CER 比 whisper small 低
+20 个百分点，而且快 50 倍。whisper 保留为可选引擎，方便换更大的模型做对照。
+
+| 引擎 | 气声 CER（50 句） | 单句耗时 | RTF | 说明 |
 |---|---|---|---|---|
-| tiny | 78MB | ~0.12 | 安静环境够用，气声容易错 | — |
-| base | 145MB | ~0.2 | 介于两者之间 | — |
-| **small（默认）** | 486MB | **0.27–0.6** | 气声推荐起点 | **58.0%**，2.7s/句 |
-| medium | 1.5GB | ~1.2 | 更准，但 CPU 上慢于实时 | **51.3%**，12.4s/句 |
+| **sensevoice（默认）** | **50.1%**（关 ITN 47.4%） | **0.05s** | **0.04** | SenseVoiceSmall int8，约 230MB |
+| whisper small | 70.8% | 2.7s | 1.46 | 486MB，可 `--model` 换 tiny/base/medium |
+| whisper medium | 51.3%（20 句子集） | 12.4s | ~4.6 | 1.5GB，CPU 上等不起 |
 
-（气声实测 = 真实气声 20 句的 CER / 每句耗时，CPU int8，见
-[docs/模型与级联_实验.md](docs/模型与级联_实验.md)。）
+（完整对比、分类 CER、以及试过但没用的预处理/LLM 纠错，见 [docs/引擎对比.md](docs/引擎对比.md)。）
 
-**结论：交互场景继续用 small。** medium 准 6.7 个百分点，但慢 4.6 倍（12 秒一句），
-「按下说话」等不起；级联（small 先跑、没把握再换 medium）能省 36% 时间，仍要 8 秒一句。
-批处理（先录一段再统一转）可以用 medium。
+```bash
+python -m whispertype config set engine whisper    # 切回 whisper
+python -m whispertype config set engine sensevoice  # 切回默认
+```
 
-预处理方向也试过了（降噪 / 低频补偿 / 动态压缩 / 气声 prompt），收益都在 1～2 个百分点、
-甚至更差，见 [docs/信号处理_实验.md](docs/信号处理_实验.md)。
-
-有 NVIDIA 显卡可以试 `--compute-device cuda`，但当前 ctranslate2 4.5 + cuDNN 9 的组合
-在部分机器上会崩（本机就是），**不建议默认开**。
+whisper 侧的模型选择：`--model tiny|base|small|medium|large-v3`；CPU 上 medium 已经慢于实时，
+large-v3 不建议。有 NVIDIA 显卡可以试 `--compute-device cuda`，但当前 ctranslate2 4.5 + cuDNN 9
+在这台机器上会崩，**不建议默认开**。
 
 ## 5. 针对气声的调参
 
@@ -175,7 +182,8 @@ python -m whispertype config set mode toggle
 whispertype/
   audio.py     录音、重采样、归一化、WAV
   vad.py       能量 VAD、首尾裁剪
-  asr.py       faster-whisper 封装（懒加载、本地缓存、CPU/GPU）
+  asr.py       faster-whisper 封装（懒加载、本地缓存、CPU/GPU）+ 引擎工厂 make_asr()
+  sensevoice.py SenseVoiceSmall（sherpa-onnx）引擎，默认
   textproc.py  去空格、修标点、去复读、过滤幻觉
   metrics.py   CER 评测
   inject.py    SendInput / 剪贴板粘贴
@@ -184,21 +192,24 @@ whispertype/
   app.py       Controller + HUD
   cli.py       命令行
 tests/         29 个单元测试（+1 个需模型的集成测试，默认跳过）
-tools/         麦克风回环测试、调参、合成气声（synth_whisper.py）、评测（benchmark.py）
+tools/         录音/评测/实验：benchmark、synth_whisper（合成气声）、synth_calibrated（用真实
+               录音校准）、import_recordings（手机录音导入）、make_record_page（生成手机录音页）、
+               compare_modes（结果汇总）、exp_*（预处理/裁剪/级联/LLM 纠错实验）
+docs/          测试方案、引擎对比、合成气声评测、信号处理/模型级联实验、DSH 接入、需求梳理
 ```
 
-`bench-synth*/` 是合成气声的产物（可随时重生成，不用提交）。
+`bench-synth*/`、`bench-modes-*/` 是本地生成/录制的产物（可重生成，不进仓库）。
 
 ## 9. 隐私
 
 音频只在内存里处理，默认不落盘；只有 `mic-check` / `transcribe` 会写 WAV。
 模型本地推理，不需要网络（下载完以后）。LLM 纠错是唯一的外发路径，默认关闭。
 
-**仓库里没有音频。** `bench*/`（个人录音）和由录音派生的语谱图都在 `.gitignore` 里，
+**仓库里没有音频。** `bench*/`、`bench-modes-*/`（个人录音）和由录音派生的语谱图都在 `.gitignore` 里，
 `tools/synth_whisper.py` 造出来的合成气声也是本地生成、可重跑，不需要提交。
 
 ## 10. 还没做的
 
 - 连续模式（不用按键，VAD 自动断句）——目前是按住说话，避免误触发；
-- 流式识别（边说边出字）——faster-whisper 可以分段，但延迟和稳定性要调；
-- 把结果接到 DSH（MCP server 或插件）——需要的话再加。
+- 流式识别（边说边出字）——SenseVoice 支持流式版本，但延迟和稳定性要调；
+- 个人词库 / 同音纠错（`docs/需求梳理.md` 的 P1，等真实基线稳定后再做）。

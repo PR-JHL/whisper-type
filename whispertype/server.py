@@ -23,7 +23,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from . import audio, vad
-from .asr import ASR
+from .asr import ASR, make_asr
 from .config import Config
 from .textproc import clean, is_hallucination, prompt_echo
 
@@ -66,7 +66,8 @@ class Handler(BaseHTTPRequestHandler):
                 200,
                 {
                     "ok": True,
-                    "model": cfg.model,
+                    "engine": cfg.engine,
+                    "model": cfg.model if cfg.engine == "whisper" else "sensevoice-small",
                     "compute": f"{cfg.compute_device}/{cfg.compute_type}",
                     "uptime": round(time.time() - STATE["started"], 1),
                 },
@@ -147,7 +148,7 @@ def main(argv: list[str] | None = None) -> None:
         language=args.language,
     )
     cfg.apply_env()
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     asr.load()
     STATE["cfg"] = cfg
     STATE["asr"] = asr

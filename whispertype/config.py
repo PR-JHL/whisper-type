@@ -22,6 +22,8 @@ class Config:
     min_utterance: float = 0.25  # 短于这个秒数丢弃
 
     # 识别
+    engine: str = "sensevoice"  # sensevoice（默认，气声更准更快）/ whisper
+    itn: bool = True  # SenseVoice 的逆文本正则：数字转阿拉伯（做题/数字场景可能要关）
     model: str = "small"  # tiny / base / small / medium / large-v3
     compute_device: str = "cpu"  # cpu / cuda（cuda 为实验性，见文档）
     compute_type: str = "int8"  # cpu:int8/float32；cuda:float16

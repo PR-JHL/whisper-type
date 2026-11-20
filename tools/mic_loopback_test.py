@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 from whispertype import audio, vad
-from whispertype.asr import ASR
+from whispertype.asr import ASR, make_asr
 from whispertype.config import Config
 from whispertype.metrics import report
 from whispertype.textproc import clean
@@ -68,7 +68,7 @@ def main() -> None:
     x = audio.prepare(r.samples, r.samplerate, cfg)
     audio.save_wav("tests/data/loopback-16k.wav", x, audio.TARGET_SR)
 
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     res = asr.transcribe(x)
     text = clean(res.text)
     print(f"识别：{text}")

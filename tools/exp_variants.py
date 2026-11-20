@@ -9,7 +9,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from whispertype.asr import ASR
+from whispertype.asr import ASR, make_asr
 from whispertype.audio import TARGET_SR, load_wav, prepare, resample_to
 from whispertype.config import Config
 from whispertype.metrics import report
@@ -30,7 +30,7 @@ def refs() -> dict[str, str]:
 
 def main() -> None:
     cfg = Config().merged(model="small")
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     asr.load()
     R = refs()
     variants = {

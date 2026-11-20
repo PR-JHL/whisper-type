@@ -6,9 +6,14 @@ bench-voiced/
 bench-synth/
 bench-synth-normal/
 bench-synth-soft/
+bench-synth-cal/
+bench-modes-*/
 *.wav
 # 例外：单元测试用的 TTS 合成样本（不是真人录音）
 !tests/data/tts_zh.wav
+
+# 录音整理时生成的清单（含个人录音的时长/电平信息）
+docs/recordings_manifest.json
 
 # 由真实录音派生的图（语谱图同样包含个人语音信息，不进仓库）
 docs/bench_spectrograms.png

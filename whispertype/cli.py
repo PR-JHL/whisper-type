@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 from . import audio, vad
-from .asr import ASR
+from .asr import ASR, make_asr
 from .config import CONFIG_PATH, Config
 from .metrics import report
 from .textproc import clean
@@ -110,7 +110,7 @@ def cmd_doctor(args) -> None:
             print("没有内置测试音频，跳过 ASR 自检")
             return
         cfg2 = cfg.merged(device=cfg.device)
-        asr = ASR(cfg2)
+        asr = make_asr(cfg2)
         res = asr.transcribe_file(sample)
         print(f"ASR 自检    {clean(res.text)}")
         print(f"            {res.duration:.1f}s 音频 / {res.elapsed:.2f}s 识别 (RTF {res.rtf:.2f})")
@@ -232,7 +232,7 @@ def cmd_mic_check(args) -> None:
 
     if args.asr:
         cfg2 = cfg.merged(model=args.model or cfg.model)
-        asr = ASR(cfg2)
+        asr = make_asr(cfg2)
         res = asr.transcribe(audio.prepare(x, sr, cfg2))
         print(f"\n识别结果：{clean(res.text) or '（空）'}")
         print(f"耗时 {res.elapsed:.2f}s / 音频 {res.duration:.1f}s (RTF {res.rtf:.2f})")
@@ -251,7 +251,7 @@ def cmd_transcribe(args) -> None:
         r = rec.stop()
         x = audio.prepare(r.samples, r.samplerate, cfg)
 
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     res = asr.transcribe(x)
     text = clean(res.text)
     print(f"\n识别：{text or '（空）'}")
@@ -269,7 +269,7 @@ def cmd_run(args) -> None:
 
     cfg = _cfg(args)
     cfg.apply_env()
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     app.run(cfg, asr, hud=cfg.hud)
 
 

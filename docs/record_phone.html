@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>气声录音 · 手机端</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: #0f1116; color: #e8ecf4; padding: 16px max(14px, env(safe-area-inset-left)); }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #8b95a8; font-size: 13px; margin-bottom: 14px; }
+  .modes { display: flex; gap: 8px; margin-bottom: 12px; }
+  .modes button { flex: 1; padding: 10px 8px; border-radius: 10px; border: 1px solid #2a3142;
+                   background: #171b24; color: #cdd5e3; font-size: 14px; }
+  .modes button.on { border-color: #4fc3f7; color: #4fc3f7; background: #14222e; }
+  .card { background: #171b24; border: 1px solid #232a38; border-radius: 14px; padding: 16px; }
+  .meta { display: flex; justify-content: space-between; color: #8b95a8; font-size: 13px; }
+  .sentence { font-size: 26px; line-height: 1.45; margin: 14px 0 18px; }
+  .hint { color: #7f8aa0; font-size: 13px; margin-bottom: 14px; }
+  .rec { width: 100%; padding: 18px; border-radius: 14px; border: 0; font-size: 19px;
+          background: #b3261e; color: #fff; font-weight: 600; }
+  .rec.on { background: #1f6f4a; }
+  .row { display: flex; gap: 10px; margin-top: 12px; }
+  .row button, .row a { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #2a3142;
+          background: #11151d; color: #dce3ef; font-size: 15px; text-align: center;
+          text-decoration: none; }
+  .row button:disabled, .row a.disabled { opacity: .4; pointer-events: none; }
+  .status { font-size: 13px; color: #8b95a8; margin-top: 10px; white-space: pre-wrap; }
+  .done { color: #6ee7a8; }
+  .warn { color: #fbbf24; }
+  .prog { height: 6px; background: #232a38; border-radius: 3px; overflow: hidden; margin: 10px 0 2px; }
+  .prog i { display: block; height: 100%; width: 0; background: #4fc3f7; transition: width .2s; }
+  footer { color: #66708a; font-size: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<h1>气声录音 · 手机端</h1>
+<div class="sub">同一批 50 句，气声 / 低声 / 正常 各录一遍。录完把文件传到电脑，跑
+  <code>python tools/import_recordings.py</code> 整理评测。</div>
+
+<div class="modes" id="modes"></div>
+
+<div class="card">
+  <div class="meta"><span id="pos">1 / 50</span><span id="cat"></span></div>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="sentence" id="text">…</div>
+  <div class="hint" id="hint"></div>
+  <button class="rec" id="rec">● 开始录音</button>
+  <div class="row">
+    <a id="dl" class="disabled" download>下载这段</a>
+    <button id="next">下一句 →</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<footer id="footer"></footer>
+
+<script>
+const SENTENCES = [{"id": "001", "cat": "日常", "text": "今天天气不错，我们下午去公园走走吧。"}, {"id": "002", "cat": "日常", "text": "我有点累了，想早点回家休息。"}, {"id": "003", "cat": "日常", "text": "楼下新开了一家面包店，味道还不错。"}, {"id": "004", "cat": "日常", "text": "冰箱里还有鸡蛋和牛奶，记得买点水果。"}, {"id": "005", "cat": "日常", "text": "这个周末你有空吗，一起吃饭吧。"}, {"id": "006", "cat": "日常", "text": "外面下雨了，出门记得带伞。"}, {"id": "007", "cat": "日常", "text": "帮我把窗户关一下，风有点大。"}, {"id": "008", "cat": "日常", "text": "我感冒了，头有点疼，想请半天假。"}, {"id": "009", "cat": "日常", "text": "快递放在门口就可以了，谢谢。"}, {"id": "010", "cat": "日常", "text": "晚上七点在地铁口见面。"}, {"id": "011", "cat": "日常", "text": "这周的工作比较多，可能要加班。"}, {"id": "012", "cat": "日常", "text": "咖啡喝多了晚上睡不着。"}, {"id": "013", "cat": "日常", "text": "我刚看到你发的消息，马上回复。"}, {"id": "014", "cat": "日常", "text": "这道菜有点咸，下次少放点盐。"}, {"id": "015", "cat": "日常", "text": "明天早上八点半集合，别迟到。"}, {"id": "016", "cat": "DSH", "text": "帮我把这段代码改成异步的，顺便加一个超时。"}, {"id": "017", "cat": "DSH", "text": "这个报错是什么意思，帮我看看日志。"}, {"id": "018", "cat": "DSH", "text": "把刚才生成的测试用例补上边界条件。"}, {"id": "019", "cat": "DSH", "text": "我需要一个能读取 JSON 并写入数据库的脚本。"}, {"id": "020", "cat": "DSH", "text": "这个函数在并发调用的时候会不会有问题。"}, {"id": "021", "cat": "DSH", "text": "帮我对比一下这两个方案的优缺点。"}, {"id": "022", "cat": "DSH", "text": "把接口文档更新一下，参数名改成小写下划线。"}, {"id": "023", "cat": "DSH", "text": "先跑一遍测试，失败的话把错误贴出来。"}, {"id": "024", "cat": "DSH", "text": "这个插件安装之后需要重启吗。"}, {"id": "025", "cat": "DSH", "text": "帮我在当前目录下新建一个配置文件。"}, {"id": "026", "cat": "DSH", "text": "解释一下这段正则表达式匹配的是什么。"}, {"id": "027", "cat": "DSH", "text": "把日志级别调到 debug，再看看输出。"}, {"id": "028", "cat": "DSH", "text": "这个页面加载太慢了，帮我找找瓶颈。"}, {"id": "029", "cat": "DSH", "text": "用 Python 写一个命令行工具，支持批量重命名。"}, {"id": "030", "cat": "DSH", "text": "把这次改动整理成一条提交信息。"}, {"id": "031", "cat": "人名地名", "text": "张伟明天下午三点来公司面试。"}, {"id": "032", "cat": "人名地名", "text": "李娜上周去杭州出差了。"}, {"id": "033", "cat": "人名地名", "text": "王芳的电话号码我找不到了。"}, {"id": "034", "cat": "人名地名", "text": "陈晨住在朝阳区望京附近。"}, {"id": "035", "cat": "人名地名", "text": "刘洋下个月要去深圳参加培训。"}, {"id": "036", "cat": "人名地名", "text": "赵敏和刘德华是同一天生日。"}, {"id": "037", "cat": "人名地名", "text": "周杰伦下周在上海开演唱会。"}, {"id": "038", "cat": "人名地名", "text": "孙悦在成都开了一家咖啡店。"}, {"id": "039", "cat": "人名地名", "text": "吴磊刚从西安回来，带了点特产。"}, {"id": "040", "cat": "人名地名", "text": "郑爽的老家在山东青岛。"}, {"id": "041", "cat": "数字标点", "text": "订单号是 A 二零二六，数量三十七件，单价十二块五。"}, {"id": "042", "cat": "数字标点", "text": "会议定在三月十五号上午十点半。"}, {"id": "043", "cat": "数字标点", "text": "这个月的支出是四千八百六十元。"}, {"id": "044", "cat": "数字标点", "text": "请把第三段第二行改成“待确认”。"}, {"id": "045", "cat": "数字标点", "text": "版本号从 1.2.3 升级到 1.3.0。"}, {"id": "046", "cat": "数字标点", "text": "温度是零下三度，湿度百分之六十五。"}, {"id": "047", "cat": "数字标点", "text": "航班号 CA1857，下午四点二十起飞。"}, {"id": "048", "cat": "数字标点", "text": "电话是幺三八零零幺三八零零零。"}, {"id": "049", "cat": "数字标点", "text": "百分之三十的用户选择了第二个方案。"}, {"id": "050", "cat": "数字标点", "text": "把文件保存到 D 盘的 work 目录下面。"}];
+const MODES = [{"key": "whisper", "label": "气声（只出气，声带不振动）"}, {"key": "low", "label": "低声（很小声但出声带振动）"}, {"key": "normal", "label": "正常音量"}];
+let mode = 'whisper', idx = 0, media = null, chunks = [], blob = null, timer = null, started = 0;
+
+const $ = (id) => document.getElementById(id);
+const modeBar = $('modes');
+MODES.forEach(m => {
+  const b = document.createElement('button');
+  b.textContent = m.label; b.dataset.key = m.key;
+  b.onclick = () => { mode = m.key; paint(); };
+  modeBar.appendChild(b);
+});
+
+function current() { return SENTENCES[idx]; }
+function paint() {
+  const s = current();
+  $('pos').textContent = (idx + 1) + ' / ' + SENTENCES.length + ' · ' + MODES.find(m => m.key === mode).label;
+  $('cat').textContent = s.cat;
+  $('text').textContent = s.text;
+  $('hint').textContent = mode === 'whisper'
+    ? '离嘴 3–5cm，只用气流，别出声带振动。保持和平时一样的语速。'
+    : (mode === 'low' ? '小声说，但正常出声（能听到嗓子）。' : '正常音量，和打电话差不多。');
+  $('bar').style.width = ((idx) / SENTENCES.length * 100) + '%';
+  document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.key === mode));
+  $('dl').classList.add('disabled'); blob = null;
+  $('status').textContent = '';
+  $('rec').classList.remove('on'); $('rec').textContent = '● 开始录音';
+}
+paint();
+
+$('rec').onclick = async () => {
+  if (media && media.state === 'recording') {
+    media.stop(); return;
+  }
+  chunks = [];
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: {
+      channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false
+    } });
+    const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/wav'];
+    const mime = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+    media = mime ? new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 128000 })
+                 : new MediaRecorder(stream);
+    media.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    media.onstop = () => {
+      clearInterval(timer);
+      stream.getTracks().forEach(t => t.stop());
+      const type = media.mimeType || 'audio/webm';
+      const ext = type.includes('mp4') ? 'm4a' : (type.includes('wav') ? 'wav' : 'webm');
+      blob = new Blob(chunks, { type });
+      const name = mode + '-' + current().id + '.' + ext;
+      const a = $('dl');
+      a.href = URL.createObjectURL(blob); a.download = name; a.classList.remove('disabled');
+      const secs = ((Date.now() - started) / 1000).toFixed(1);
+      $('status').innerHTML = '<span class="done">录好了：' + name + ' · ' + secs + 's</span>\n点「下载这段」存到手机；然后「下一句」。';
+      $('rec').classList.remove('on'); $('rec').textContent = '● 重录';
+    };
+    media.start();
+    started = Date.now();
+    $('rec').classList.add('on'); $('rec').textContent = '■ 停止（说话中…）';
+    $('status').textContent = '录音中…';
+    timer = setInterval(() => { $('status').textContent = '录音中 ' + ((Date.now() - started) / 1000).toFixed(1) + 's'; }, 200);
+  } catch (e) {
+    $('status').innerHTML = '<span class="warn">拿不到麦克风：' + e.message + '\n需要 https 或 localhost 打开，或允许浏览器麦克风权限。</span>';
+  }
+};
+
+$('next').onclick = () => {
+  if (media && media.state === 'recording') { media.stop(); }
+  blob = null; $('dl').classList.add('disabled');
+  idx = (idx + 1) % SENTENCES.length;
+  paint();
+};
+
+window.addEventListener('load', () => {
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    $('status').innerHTML = '<span class="warn">这个浏览器不支持网页录音，请用系统录音机，或换 Chrome/Safari 较新版本。</span>';
+  }
+});
+</script>
+</body>
+</html>

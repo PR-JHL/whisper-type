@@ -205,3 +205,15 @@ class ASR:
 
             x = resample_to(x, rec.samplerate, TARGET_SR)
         return self.transcribe(x, TARGET_SR)
+
+def make_asr(cfg: Config):
+    """按 cfg.engine 返回识别引擎。
+
+    sensevoice（默认）：真实气声 CER 50.1%，CPU 上还更快；
+    whisper：可换模型/调 beam，作为对照保留。
+    """
+    if getattr(cfg, "engine", "sensevoice") == "whisper":
+        return ASR(cfg)
+    from .sensevoice import SenseVoiceASR
+
+    return SenseVoiceASR(cfg)

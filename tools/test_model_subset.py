@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from whispertype.asr import ASR
+from whispertype.asr import ASR, make_asr
 from whispertype.audio import load_wav, prepare
 from whispertype.config import Config
 from whispertype.metrics import report
@@ -31,7 +31,7 @@ def main() -> None:
             refs[sid] = text
 
     cfg = Config().merged(model=args.model)
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     asr.load()
     total_edits = total_chars = 0
     for sid in ids:

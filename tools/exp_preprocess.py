@@ -30,7 +30,7 @@ from scipy import signal as sps
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from whispertype.asr import ASR  # noqa: E402
+from whispertype.asr import ASR, make_asr  # noqa: E402
 from whispertype.audio import load_wav, normalize_rms, prepare  # noqa: E402
 from whispertype.config import Config  # noqa: E402
 from whispertype.metrics import report  # noqa: E402
@@ -143,7 +143,7 @@ def main() -> int:
     if skip:
         rows = [r for r in rows if r[0] not in skip]
     cfg = Config.load().merged(model=args.model)
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     base_prompt = cfg.initial_prompt
 
     results = []

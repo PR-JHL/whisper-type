@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from whispertype.asr import ASR
+from whispertype.asr import ASR, make_asr
 from whispertype.audio import load_wav, prepare
 from whispertype.config import Config
 from whispertype.metrics import report
@@ -35,7 +35,10 @@ def load_manifest() -> list[tuple[str, str, str]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default=None)
+    ap.add_argument("--model", default=None, help="whisper 模型（仅 engine=whisper 时生效）")
+    ap.add_argument("--engine", default=None, choices=["whisper", "sensevoice"],
+                    help="识别引擎；默认读配置（现在默认 sensevoice）")
+    ap.add_argument("--no-itn", action="store_true", help="SenseVoice 关闭 ITN（数字保留中文写法）")
     ap.add_argument("--dir", default=str(BENCH), help="WAV 目录，默认 bench/")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--json-out", default=None)
@@ -44,11 +47,14 @@ def main() -> None:
 
     bench_dir = Path(args.dir)
     tag = "" if bench_dir.resolve() == BENCH.resolve() else "_" + bench_dir.name
+    cfg = Config.load().merged(model=args.model, engine=args.engine,
+                               itn=False if args.no_itn else None)
+    engine = cfg.engine
+    if engine != "whisper":
+        tag = tag + f"_{engine}" + ("_noitn" if args.no_itn else "")
     json_out = Path(args.json_out or (ROOT / "docs" / f"bench_result{tag}.json"))
     md_out = Path(args.md_out or (ROOT / "docs" / f"bench_report{tag}.md"))
-
-    cfg = Config.load().merged(model=args.model)
-    asr = ASR(cfg)
+    asr = make_asr(cfg)
     rows = load_manifest()
     if args.limit:
         rows = rows[: args.limit]
@@ -91,7 +97,9 @@ def main() -> None:
     lines = [
         "# 气声基线报告",
         "",
-        f"- 模型：`{cfg.model}`，设备：`{cfg.compute_device}/{cfg.compute_type}`",
+        (f"- 引擎：`{engine}`"
+         + (f"（whisper `{cfg.model}`）" if engine == "whisper" else "（SenseVoiceSmall int8, sherpa-onnx）")
+         + f"，设备：`{cfg.compute_device}/{cfg.compute_type}`"),
         f"- 句子：{len(results)}，总字数：{total_chars}",
         f"- **总体 CER：{overall:.1%}**",
         f"- 识别总耗时 {elapsed:.1f}s / 音频 {audio_s:.1f}s（RTF {elapsed / max(1e-6, audio_s):.2f}）",

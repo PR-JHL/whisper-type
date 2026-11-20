@@ -1,0 +1,67 @@
+[
+ {
+  "dir": "bench",
+  "variant": "base",
+  "sentences": 48,
+  "cer": 0.4803,
+  "categories": {
+   "日常": 0.3233,
+   "DSH": 0.4604,
+   "人名地名": 0.5009,
+   "数字标点": 0.6377
+  },
+  "seconds": 5.3
+ },
+ {
+  "dir": "bench",
+  "variant": "denoise",
+  "sentences": 48,
+  "cer": 0.4789,
+  "categories": {
+   "日常": 0.3045,
+   "DSH": 0.477,
+   "人名地名": 0.5015,
+   "数字标点": 0.6277
+  },
+  "seconds": 4.4
+ },
+ {
+  "dir": "bench",
+  "variant": "tilt",
+  "sentences": 48,
+  "cer": 0.4774,
+  "categories": {
+   "日常": 0.3168,
+   "DSH": 0.4603,
+   "人名地名": 0.4879,
+   "数字标点": 0.6444
+  },
+  "seconds": 4.0
+ },
+ {
+  "dir": "bench",
+  "variant": "tilt9",
+  "sentences": 48,
+  "cer": 0.476,
+  "categories": {
+   "日常": 0.304,
+   "DSH": 0.4698,
+   "人名地名": 0.4688,
+   "数字标点": 0.6521
+  },
+  "seconds": 4.1
+ },
+ {
+  "dir": "bench",
+  "variant": "compress",
+  "sentences": 48,
+  "cer": 0.4905,
+  "categories": {
+   "日常": 0.3087,
+   "DSH": 0.4836,
+   "人名地名": 0.5161,
+   "数字标点": 0.6509
+  },
+  "seconds": 4.8
+ }
+]
